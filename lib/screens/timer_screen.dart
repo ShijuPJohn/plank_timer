@@ -13,13 +13,14 @@ class TimerScreen extends StatefulWidget {
 
 class _TimerScreenState extends State<TimerScreen> {
   final _isHours = true;
-  var currentTime = '';
-  bool isStart = false;
+  var _currentTime = '';
+  var _isStart = false;
+  var _isStartedAtLeastOnce = false;
 
   final StopWatchTimer _stopWatchTimer = StopWatchTimer(
     isLapHours: true,
     // onChange: (value) => print('onChange $value'),
-    onChangeRawSecond: (value) => print('onChangeRawSecond $value'),
+    // onChangeRawSecond: (value) => print('onChangeRawSecond $value'),
     // onChangeRawMinute: (value) => print('onChangeRawMinute $value'),
   );
 
@@ -33,7 +34,7 @@ class _TimerScreenState extends State<TimerScreen> {
     // _stopWatchTimer.records.listen((value) => print('records $value'));
 
     /// Can be set preset time. This case is "00:01.23".
-    // _stopWatchTimer.setPresetTime(mSec: 1234);
+    // _stopWatchTimer.setPresetTime(mSec: 600234);
   }
 
   @override
@@ -70,60 +71,46 @@ class _TimerScreenState extends State<TimerScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 MaterialButton(
-                  minWidth: 200,
+                  minWidth: 300,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(50)),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   color: Colors.blue,
                   onPressed: () {
-                    if (!isStart) {
+                    if (!_isStart) {
                       _stopWatchTimer.onExecute.add(StopWatchExecute.start);
-                      isStart = true;
+                      _isStart = true;
                     } else {
                       _stopWatchTimer.onExecute.add(StopWatchExecute.stop);
-                      isStart = false;
+                      _isStart = false;
                     }
+                    _isStartedAtLeastOnce = true;
                   },
                   child: Text(
-                    'START/PAUSE',
-                    style: TextStyle(fontSize: 20, color: Colors.white),
+                    'START/STOP',
+                    style: TextStyle(fontSize: 15, color: Colors.white),
                   ),
                 ),
-                // SizedBox(
-                //   width: 20,
-                // ),
-                // MaterialButton(
-                //   shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(10)),
-                //   padding: EdgeInsets.all(16),
-                //   color: Colors.orange,
-                //   onPressed: () {
-                //     _stopWatchTimer.onExecute.add(StopWatchExecute.stop);
-                //   },
-                //   child: Text(
-                //     'STOP',
-                //     style: TextStyle(fontSize: 20, color: Colors.white),
-                //   ),
-                // )
               ],
             ),
             SizedBox(
-              height: 20,
+              height: 80,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 MaterialButton(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(5)),
                   padding: EdgeInsets.all(16),
                   color: Colors.red,
                   onPressed: () {
+                    _isStartedAtLeastOnce = false;
                     _stopWatchTimer.onExecute.add(StopWatchExecute.reset);
                   },
                   child: Text(
                     'RESET',
-                    style: TextStyle(fontSize: 20, color: Colors.white),
+                    style: TextStyle(fontSize: 15, color: Colors.white),
                   ),
                 ),
                 SizedBox(
@@ -131,17 +118,57 @@ class _TimerScreenState extends State<TimerScreen> {
                 ),
                 MaterialButton(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(5)),
                   padding: EdgeInsets.all(16),
                   color: Colors.green,
                   onPressed: () {
-                    // _stopWatchTimer.rawTime.value.toString(),
+                    if (!_isStartedAtLeastOnce) {
+                      Scaffold.of(context).hideCurrentSnackBar();
+                      Scaffold.of(context).showSnackBar(
+                        SnackBar(
+                          duration: Duration(seconds: 1),
+                          content: Text(
+                            'Timer not started',
+                            textAlign: TextAlign.center,
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+                    if (_isStart) {
+                      Scaffold.of(context).hideCurrentSnackBar();
+                      Scaffold.of(context).showSnackBar(
+                        SnackBar(
+                          duration: Duration(seconds: 1),
+                          content: Text(
+                            'Please stop the timer and save',
+                            textAlign: TextAlign.center,
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
                     Provider.of<WorkoutProvider>(context, listen: false)
                         .addWorkout(_stopWatchTimer.rawTime.value.toString());
+                    _stopWatchTimer.onExecute.add(StopWatchExecute.reset);
+                    _isStartedAtLeastOnce = false;
+                    Scaffold.of(context).hideCurrentSnackBar();
+                    Scaffold.of(context).showSnackBar(
+                      SnackBar(
+                        duration: Duration(seconds: 1),
+                        content: Text(
+                          'Saved',
+                          textAlign: TextAlign.center,
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   },
                   child: Text(
                     'SAVE',
-                    style: TextStyle(fontSize: 20, color: Colors.white),
+                    style: TextStyle(fontSize: 15, color: Colors.white),
                   ),
                 )
               ],

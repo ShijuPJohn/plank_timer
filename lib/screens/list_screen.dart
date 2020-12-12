@@ -9,7 +9,6 @@ class ListScreen extends StatefulWidget {
 }
 
 class _ListScreenState extends State<ListScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -47,14 +46,17 @@ class _ListScreenState extends State<ListScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       children: [
                                         Text(
-                                          Duration(
-                                                  milliseconds: int.parse(
-                                                      exerciseItems.items[index]
-                                                          .timeDuration))
-                                              .inMinutes
+                                          ((Duration(
+                                                          milliseconds: int.parse(
+                                                              exerciseItems
+                                                                  .items[index]
+                                                                  .timeDuration))
+                                                      .inMinutes) %
+                                                  60)
                                               .toString(),
                                           style: TextStyle(
                                             fontSize: 40,
@@ -66,7 +68,8 @@ class _ListScreenState extends State<ListScreen> {
                                           width: 5,
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.only(bottom: 8.0),
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
                                           child: Text(
                                             'Minutes',
                                             style: TextStyle(
@@ -76,13 +79,17 @@ class _ListScreenState extends State<ListScreen> {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 20,),
+                                        SizedBox(
+                                          width: 20,
+                                        ),
                                         Text(
-                                          Duration(
-                                                  milliseconds: int.parse(
-                                                      exerciseItems.items[index]
-                                                          .timeDuration))
-                                              .inSeconds
+                                          ((Duration(
+                                                          milliseconds: int.parse(
+                                                              exerciseItems
+                                                                  .items[index]
+                                                                  .timeDuration))
+                                                      .inSeconds) %
+                                                  60)
                                               .toString(),
                                           style: TextStyle(
                                             fontSize: 40,
@@ -94,7 +101,8 @@ class _ListScreenState extends State<ListScreen> {
                                           width: 5,
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.only(bottom : 8.0),
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
                                           child: Text(
                                             'Seconds',
                                             style: TextStyle(
