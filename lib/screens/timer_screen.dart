@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:plank_timer/helpers/db_helper.dart';
 import 'package:plank_timer/providers/workout_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
-import 'package:uuid/uuid.dart';
 
 class TimerScreen extends StatefulWidget {
   final _isHours = true;
@@ -43,139 +41,178 @@ class _TimerScreenState extends State<TimerScreen> {
     await _stopWatchTimer.dispose();
   }
 
+  Widget timerText() {
+    return Center(
+        child: StreamBuilder<int>(
+      stream: _stopWatchTimer.rawTime,
+      initialData: _stopWatchTimer.rawTime.value,
+      builder: (context, snapshot) {
+        final value = snapshot.data;
+        final displayTime = StopWatchTimer.getDisplayTime(value).substring(3,10);
+        return Text(
+          displayTime,
+          style: TextStyle(
+            fontSize: 70,
+          ),
+        );
+      },
+    ));
+  }
+
+  Widget resetButton() {
+    return MaterialButton(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      padding: EdgeInsets.all(16),
+      color: Colors.red,
+      onPressed: () {
+        _isStartedAtLeastOnce = false;
+        _stopWatchTimer.onExecute.add(StopWatchExecute.reset);
+      },
+      child: Text(
+        'RESET',
+        style: TextStyle(fontSize: 15, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget startStopButton() {
+    return MaterialButton(
+      minWidth: 300,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      color: Colors.blue,
+      onPressed: () {
+        if (!_isStart) {
+          _stopWatchTimer.onExecute.add(StopWatchExecute.start);
+          _isStart = true;
+        } else {
+          _stopWatchTimer.onExecute.add(StopWatchExecute.stop);
+          _isStart = false;
+        }
+        _isStartedAtLeastOnce = true;
+      },
+      child: Text(
+        'START/STOP',
+        style: TextStyle(fontSize: 15, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget saveButton() {
+    return MaterialButton(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      padding: EdgeInsets.all(16),
+      color: Colors.green,
+      onPressed: () {
+        if (!_isStartedAtLeastOnce) {
+          Scaffold.of(context).hideCurrentSnackBar();
+          Scaffold.of(context).showSnackBar(
+            SnackBar(
+              duration: Duration(seconds: 1),
+              content: Text(
+                'Timer not started',
+                textAlign: TextAlign.center,
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+        if (_isStart) {
+          Scaffold.of(context).hideCurrentSnackBar();
+          Scaffold.of(context).showSnackBar(
+            SnackBar(
+              duration: Duration(seconds: 1),
+              content: Text(
+                'Please stop the timer and save',
+                textAlign: TextAlign.center,
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        Provider.of<WorkoutProvider>(context, listen: false)
+            .addWorkout(_stopWatchTimer.rawTime.value.toString());
+        _stopWatchTimer.onExecute.add(StopWatchExecute.reset);
+        _isStartedAtLeastOnce = false;
+        Scaffold.of(context).hideCurrentSnackBar();
+        Scaffold.of(context).showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: 1),
+            content: Text(
+              'Saved',
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+      child: Text(
+        'SAVE',
+        style: TextStyle(fontSize: 15, color: Colors.white),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Center(
-            child: StreamBuilder<int>(
-          stream: _stopWatchTimer.rawTime,
-          initialData: _stopWatchTimer.rawTime.value,
-          builder: (context, snapshot) {
-            final value = snapshot.data;
-            final displayTime =
-                StopWatchTimer.getDisplayTime(value).substring(3);
-            return Text(
-              displayTime,
-              style: TextStyle(
-                fontSize: 70,
-              ),
-            );
-          },
-        )),
-        Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                MaterialButton(
-                  minWidth: 300,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50)),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                  color: Colors.blue,
-                  onPressed: () {
-                    if (!_isStart) {
-                      _stopWatchTimer.onExecute.add(StopWatchExecute.start);
-                      _isStart = true;
-                    } else {
-                      _stopWatchTimer.onExecute.add(StopWatchExecute.stop);
-                      _isStart = false;
-                    }
-                    _isStartedAtLeastOnce = true;
-                  },
-                  child: Text(
-                    'START/STOP',
-                    style: TextStyle(fontSize: 15, color: Colors.white),
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        if (orientation == Orientation.portrait) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              timerText(),
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      startStopButton(),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 80,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                MaterialButton(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5)),
-                  padding: EdgeInsets.all(16),
-                  color: Colors.red,
-                  onPressed: () {
-                    _isStartedAtLeastOnce = false;
-                    _stopWatchTimer.onExecute.add(StopWatchExecute.reset);
-                  },
-                  child: Text(
-                    'RESET',
-                    style: TextStyle(fontSize: 15, color: Colors.white),
+                  SizedBox(
+                    height: 80,
                   ),
-                ),
-                SizedBox(
-                  width: 20,
-                ),
-                MaterialButton(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5)),
-                  padding: EdgeInsets.all(16),
-                  color: Colors.green,
-                  onPressed: () {
-                    if (!_isStartedAtLeastOnce) {
-                      Scaffold.of(context).hideCurrentSnackBar();
-                      Scaffold.of(context).showSnackBar(
-                        SnackBar(
-                          duration: Duration(seconds: 1),
-                          content: Text(
-                            'Timer not started',
-                            textAlign: TextAlign.center,
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
-                    if (_isStart) {
-                      Scaffold.of(context).hideCurrentSnackBar();
-                      Scaffold.of(context).showSnackBar(
-                        SnackBar(
-                          duration: Duration(seconds: 1),
-                          content: Text(
-                            'Please stop the timer and save',
-                            textAlign: TextAlign.center,
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    Provider.of<WorkoutProvider>(context, listen: false)
-                        .addWorkout(_stopWatchTimer.rawTime.value.toString());
-                    _stopWatchTimer.onExecute.add(StopWatchExecute.reset);
-                    _isStartedAtLeastOnce = false;
-                    Scaffold.of(context).hideCurrentSnackBar();
-                    Scaffold.of(context).showSnackBar(
-                      SnackBar(
-                        duration: Duration(seconds: 1),
-                        content: Text(
-                          'Saved',
-                          textAlign: TextAlign.center,
-                        ),
-                        backgroundColor: Colors.green,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      resetButton(),
+                      SizedBox(
+                        width: 20,
                       ),
-                    );
-                  },
-                  child: Text(
-                    'SAVE',
-                    style: TextStyle(fontSize: 15, color: Colors.white),
+                      saveButton(),
+                    ],
                   ),
-                )
-              ],
-            ),
-          ],
-        )
-      ],
+                ],
+              )
+            ],
+          );
+        } else {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  timerText(),
+                  startStopButton(),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  resetButton(),
+                  SizedBox(height:20,),
+                  saveButton(),
+                ],
+              )
+            ],
+          );
+        }
+      },
     );
   }
 }
